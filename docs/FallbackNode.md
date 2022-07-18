@@ -3,12 +3,21 @@
 This family of nodes are known as "Selector" or "Priority"
 in other frameworks.
 
-Their purpose is to try different strategies, until we find one that "works".
+They are used to iterate through children, running each one, until a child node 
+returns __SUCCESS__ or all children have returned __FAILURE__
 
-Currently the framework provides two kinds of nodes:
+The framework provides two nodes:
 
 - Fallback
 - ReactiveFallback
+
+Although similar, the two nodes differ in one important way: 
+
+- Fallback ticks children in a linear sequence.
+
+- ReactiveFallback ticks children in a loop.  
+
+## Shared Rules
 
 They share the following rules:
 
@@ -22,21 +31,26 @@ They share the following rules:
 - If a child returns __SUCCESS__, it stops and returns __SUCCESS__.
   All the children are halted. 
 
-To understand how the two ControlNodes differ, refer to the following table:
+## Difference in __RUNNING__ behavior
+
+The following table describes the difference in control sequence when a child 
+returns __RUNNING__:
 
 | Type of ControlNode | Child returns RUNNING |
 |---|:---:|
 | Fallback | Tick again  |
 | ReactiveFallback  |  Restart |
 
-- "__Restart__" means that the entire fallback is restarted from the first 
-  child of the list.
-
-- "__Tick again__" means that the next time the fallback is ticked, the 
-  same child is ticked again. Previous sibling, which returned FAILURE already,
+- "__Tick again__" means that on the next tick, the 
+  same child is ticked again. Previous siblings
   are not ticked again.
+  
+- "__Restart__" means that the iteration through the sequence of children is 
+  restarted on the next tick.
 
 ## Fallback
+
+
 
 In this example, we try different strategies to open the door. 
 Check first (and once) if the door is open.
@@ -81,6 +95,8 @@ child if one of the previous Conditions changes its state from
 FAILURE to SUCCESS.
 
 In the following example, the character will sleep *up to* 8 hours. If he/she has fully rested, then the node `areYouRested?` will return SUCCESS and the asynchronous nodes `Timeout (8 hrs)` and `Sleep` will be interrupted.
+
+In each loop, "areYouRested?" will be ticked. If it returns __FAILURE__, the "Timeout (8 Hours)" will then be ticked. If instead, "areYouRested?" returns __SUCCESS__, "Timeout (8 Hours)" will be interrupted by calling its halt() method. If "Timeout (8 Hours)" returns __SUCCESS__ at any point, all other nodes will be killed. 
 
 ![ReactiveFallback](images/ReactiveFallback.png)
 
